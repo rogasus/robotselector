@@ -265,7 +265,7 @@ if illegal(1) == 0 && illegal(2) == 0
             
             if (isempty(tsk) == false && ...
                     payload <= maxload && ...
-                    noise <= robotnoise && ...
+                    noise >= robotnoise && ...
                     temp <= robotmaxtemp && ...
                     robotmintemp <= temp)
                 illegal(3) = 0;
@@ -300,8 +300,13 @@ if illegal(1) == 0 && illegal(2) == 0
                     disp('--------------')
                     disp('ROBOT SUITABLE')
                     disp('--------------')
-                    successq = [successq; robotpointer qbest];
                     suitablelist = strvcat(suitablelist,robotname);
+                    siz = size(qbest);
+                    setsucces = [robotpointer 0 0 0 0 0 0];
+                    for k = 1:siz(2)
+                        setsucces(k+1) = qbest(k);
+                    end
+                    successq = [successq; setsucces];
                 else
                     disp('------------------')
                     disp('ROBOT NOT SUITABLE')
@@ -422,7 +427,7 @@ P = [cell2mat(goaltable(1,1)) cell2mat(goaltable(2,1)) cell2mat(goaltable(3,1))]
 [X,Y,Z] = generatepoints(get(handles.envfile,'string'),str2double(get(handles.envaccur,'string')));
 [S,mindist] = distancecalc(X,Y,Z,P);
 
-if mindist < str2double(get(handles.colres,'string'))+str2double(get(handles.envaccur,'string'))
+if mindist < str2double(get(handles.colres,'string'))%+str2double(get(handles.envaccur,'string'))
     illegal(4) = 1;
     set(handles.addbut,'Enable','off');
 else
@@ -494,7 +499,19 @@ updateplot(hObject, eventdata, handles)
 function readenv(hObject, eventdata, handles)
 global V
 global F
+global testrobot
+global illegal
 [V,F] = read_vertices_and_faces_from_obj_file(get(handles.envfile,'string'));
+
+P = [testrobot.base(1,4) testrobot.base(2,4) testrobot.base(3,4)];
+[X,Y,Z] = generatepoints(get(handles.envfile,'string'),str2double(get(handles.envaccur,'string')));
+[~,mindist] = distancecalc(X,Y,Z,P);
+
+if mindist < str2double(get(handles.colres,'string'))
+    illegal(1) = 1;
+else
+    illegal(1) = 0;
+end
 
 % --- Executes when entered data in editable cell(s) in loctable.
 function loctable_CellEditCallback(hObject, eventdata, handles)
